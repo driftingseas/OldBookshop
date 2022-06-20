@@ -299,6 +299,7 @@ void password()// function containing password
 
 }// end of password function
 
+
 void createCustfile()// Menu option 1 which creates a new file to store customer information
 {
     FILE*sec;// file pointer
@@ -739,7 +740,7 @@ void placeOrder()//Menu option 7 which accepts pre-orders
 		fread(&info,sizeof (struct customerInfo),1,sec);
 		/*Read Mode*/
 
-        // DOES NOT EXIST FUNC - WOULD WE NOT USE TE SAME AS displayStock FUNC?
+        // DOES NOT EXIST FUNC - WOULD WE NOT USE THE SAME AS displayStock FUNC?
 		while(info.accountNum==0)
 		{
 		    printf("===============================================================\n\n");
@@ -844,6 +845,54 @@ void view()//menu option 8 which displays the order list
     system("Pause");
 }
 
+void Receipt(int searchId, int bookSaleQuantity, FILE* fir, FILE* sec, float totalPrice, float price, float payment,float change)
+{
+    printf("============================================================\n\n");
+
+    printf("      =>=>=>=>=>=>=> MOONLIGHT BOOKSTORE =>=>=>=>=>=>=>     \n\n");
+
+    printf("============================================================\n");
+
+    printf("Quantity\t\tBook\t\tPrice\n");
+    fscanf(sec, "%d%d", &searchId, &bookSaleQuantity);
+
+    fseek(fir, (searchId - 1) * sizeof(struct bookStock), SEEK_SET);
+    fread(&stock, sizeof(struct bookStock), 1, fir);
+
+    while (!feof(sec))// while it is not the end of the file
+    {
+        if (searchId == stock.productid)
+        {
+            printf("    %d\t\t\t%s\t\t\t$%.2f\n", bookSaleQuantity, stock.book, stock.price);
+        }// end if
+
+        fscanf(sec, "%d%d", &searchId, &bookSaleQuantity);
+
+        fseek(fir, (searchId - 1) * sizeof(struct bookStock), SEEK_SET);
+        fread(&stock, sizeof(struct bookStock), 1, fir);
+    }// end while
+
+    change = payment - totalPrice;
+
+    printf("||==||==||==||==||==||==||==||==||==||==||==||==||==||==||==||==||\n\n");
+
+    printf("Total\t\t\t$%.2f\n\n", totalPrice);
+
+    printf("||==||==||==||==||==||==||==||==||==||==||==||==||==||==||==||==||\n");
+
+    printf("Cash Amount\t\t\t\t\t$%.2f %\n", payment);
+    printf("Change\t\t\t\t\t\t$%.2f \n", change);
+
+    printf("||==||==||==||==||==||==||==||==||==||==||==||==||==||==||==||==||\n\n");
+
+    printf("||==||==||==||==WE LOOK FORWARD TO YOUR NEXT VISIT==||==||==||==||\n\n");
+
+    printf("||==||==||==||==||==||==||==||==||==||==||==||==||==||==||==||==||\n");
+
+    fseek(fir, (stock.productid - 1) * sizeof(struct bookStock), SEEK_SET);
+    fwrite(&stock, sizeof(struct bookStock), 1, fir);
+}
+
 void Bill()//Menu option 9 which generates a bill
 {
     FILE*fir;// file pointer
@@ -851,7 +900,7 @@ void Bill()//Menu option 9 which generates a bill
     FILE*third;
 
     int searchid,bookcount,sold,booksale,booksalequantity,specialID;
-    float totalprice,price,payment,change,more;
+    float totalprice, price, payment, change, moneyOwed;
     char answer[string_length];
 
     specialID=13;
@@ -942,8 +991,8 @@ void Bill()//Menu option 9 which generates a bill
 
 				while(payment<price)
 				{
-					more=price-payment;
-					printf("NOT ENOUGH MONEY.$ %.2f more is needed\n",more);
+					moneyOwed=price-payment;
+					printf("NOT ENOUGH MONEY.$ %.2f more is needed\n",moneyOwed);
 					printf("Enter amount paid: \n");
           			scanf("%f",&payment);
 				}
@@ -958,41 +1007,12 @@ void Bill()//Menu option 9 which generates a bill
                 }// end if
 
                 // RECEIPT FUNC MAYBE?
-                printf("============================================================\n\n");
+                Receipt(searchid, booksalequantity, fir, sec, totalprice, price, payment, change);
 
-                printf("      =>=>=>=>=>=>=> MOONLIGHT BOOKSTORE =>=>=>=>=>=>=>     \n\n");
 
-                printf("============================================================\n");
-
-                printf("Quantity\t\tBook\t\tPrice\n");
-                fscanf(sec,"%d%d",&specialID,&info.SpecEdAmount);
-
-                fseek(fir,(specialID-1)*sizeof(struct bookStock),SEEK_SET);
-                fread(&stock,sizeof(struct bookStock),1,fir);
-
-                printf("    %d\t\t%s\t\t$%.2f\n",info.SpecEdAmount,stock.book,stock.price);
-
-                change=payment-price;
-
-                printf("||==||==||==||==||==||==||==||==||==||==||==||==||==||==||==||==||\n\n");
-
-                printf ("Total\t\t\t\t\t\t$%.2f\n\n",price);
-
-                printf("||==||==||==||==||==||==||==||==||==||==||==||==||==||==||==||==||\n");
-
-                printf ("Cash Amount\t\t\t$%.2f %\n",payment);
-                printf ("Change\t\t\t$%.2f \n",change);
-
-                printf("||==||==||==||==||==||==||==||==||==||==||==||==||==||==||==||==||\n\n");
-
-                printf("||==||==||==||==WE LOOK FORWARD TO YOUR NEXT VISIT==||==||==||==||\n\n");
-
-                printf("||==||==||==||==||==||==||==||==||==||==||==||==||==||==||==||==||\n");
-
-                fseek(fir,(stock.productid-1)*sizeof(struct bookStock),SEEK_SET);
-                fwrite(&stock,sizeof(struct bookStock),1,fir);
-
-                int ids=dequeueCustomerInfo();
+                // CREATE A 2 OTHER FILES TO SEPARATELY STORE CUSTOMERS WHO ORDER THE SPECIAL EDITION BOOK.
+                // THIS LINE DELETES CUSTOMER FROM ORIGINAL CUSTOMER LIST. 
+                //int ids=dequeueCustomerInfo();
             }
         }
         else
@@ -1080,50 +1100,7 @@ void Bill()//Menu option 9 which generates a bill
             }// end if
 
             // RECEIPT FUNC 
-			printf("============================================================\n\n");
-
-            printf("      =>=>=>=>=>=>=> MOONLIGHT BOOKSTORE =>=>=>=>=>=>=>     \n\n");
-
-            printf("============================================================\n");
-
-            printf("Quantity\t\tBook\t\tPrice\n");
-            fscanf(sec,"%d%d",&searchid,&booksalequantity);
-
-            fseek(fir,(searchid-1)*sizeof(struct bookStock),SEEK_SET);
-            fread(&stock,sizeof(struct bookStock),1,fir);
-
-            while(!feof(sec))// while it is not the end of the file
-            {
-                if(searchid==stock.productid)
-                {
-                    printf("    %d\t\t\t%s\t\t\t$%.2f\n",booksalequantity,stock.book,stock.price);
-                }// end if
-
-                fscanf(sec,"%d%d",&searchid,&booksalequantity);
-
-                fseek(fir,(searchid-1)*sizeof(struct bookStock),SEEK_SET);
-                fread(&stock,sizeof(struct bookStock),1,fir);
-            }// end while
-
-            change=payment-totalprice;
-
-            printf("||==||==||==||==||==||==||==||==||==||==||==||==||==||==||==||==||\n\n");
-
-            printf ("Total\t\t\t$%.2f\n\n",totalprice);
-
-            printf("||==||==||==||==||==||==||==||==||==||==||==||==||==||==||==||==||\n");
-
-            printf ("Cash Amount\t\t\t\t\t$%.2f %\n",payment);
-            printf ("Change\t\t\t\t\t\t$%.2f \n",change);
-
-            printf("||==||==||==||==||==||==||==||==||==||==||==||==||==||==||==||==||\n\n");
-
-			printf("||==||==||==||==WE LOOK FORWARD TO YOUR NEXT VISIT==||==||==||==||\n\n");
-
-			printf("||==||==||==||==||==||==||==||==||==||==||==||==||==||==||==||==||\n");
-
-            fseek(fir,(stock.productid-1)*sizeof(struct bookStock),SEEK_SET);
-            fwrite(&stock,sizeof(struct bookStock),1,fir);
+            Receipt(searchid, booksalequantity, fir, sec, totalprice, price, payment, change);
         }
         fclose(sec);// close file
         fclose(fir);// close file
